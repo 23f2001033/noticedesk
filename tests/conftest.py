@@ -50,3 +50,30 @@ def fake_firestore_with_user():
 @pytest.fixture
 def fake_firestore_no_user() -> _FakeFirestoreClient:
     return _FakeFirestoreClient(_FakeDoc(exists=False))
+
+
+class _FakeWriteFirestoreClient:
+    """Stands in for google.cloud.firestore.Client in write-path tests
+    (e.g. app.services.logging_runs.log_agent_run) -- records every
+    collection(...).document().set(data) call instead of hitting Firestore.
+    """
+
+    def __init__(self) -> None:
+        self.writes: list[tuple[str, dict]] = []
+        self._pending_collection: str | None = None
+
+    def collection(self, name: str) -> "_FakeWriteFirestoreClient":
+        self._pending_collection = name
+        return self
+
+    def document(self, doc_id: str | None = None) -> "_FakeWriteFirestoreClient":
+        return self
+
+    def set(self, data: dict) -> None:
+        assert self._pending_collection is not None
+        self.writes.append((self._pending_collection, data))
+
+
+@pytest.fixture
+def fake_firestore_recorder() -> _FakeWriteFirestoreClient:
+    return _FakeWriteFirestoreClient()

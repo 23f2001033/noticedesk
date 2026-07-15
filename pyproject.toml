@@ -9,6 +9,8 @@ dependencies = [
     "pydantic-settings",
     "google-cloud-firestore",
     "firebase-admin",
+    "google-genai",
+    "tzdata",
 ]
 
 [project.optional-dependencies]
