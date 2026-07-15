@@ -12,6 +12,24 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install webapp dependencies
+        working-directory: webapp
+        run: npm ci
+
+      - name: Lint webapp
+        working-directory: webapp
+        run: npm run lint
+
+      - name: Build webapp
+        working-directory: webapp
+        run: npm run build
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

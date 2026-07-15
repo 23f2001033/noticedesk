@@ -79,3 +79,21 @@
 **Next:**
 - `webapp/` scaffold (Vite + React + Tailwind) with Login + Board pages — first slice that gives you something to click through.
 - Corpus pipeline tooling + golden-notice eval harness (still gated on Aman's curation work, not something to fabricate).
+
+## 2026-07-16 — Phase 1, slice 4: webapp scaffold (Login + Board)
+
+**Shipped:**
+- `webapp/`: Vite + React 19 + TypeScript + Tailwind v4, scaffolded via `npm create vite@latest -- --template react-ts` then built out. New deps beyond the locked stack: `react-router-dom` (client-side routing, no viable Vite+React multi-page app without one) and `firebase` (the JS SDK for the already-locked Firebase Auth) — both natural consequences of stack choices already made, not asked about separately.
+- Firebase Auth wiring (`src/firebase.ts`, `src/auth/`): Google sign-in only for now. **Email-link sign-in (also named in §11) is deferred** — no live Firebase project to test either against, and shipping a half-tested two-step flow isn't worth it yet.
+- `Login` and `Board` pages — Board calls `GET /api/cases` with a Firebase ID token attached, renders the case list with urgency badges, filterable by status.
+- FastAPI now serves the built SPA (`app/services/webapp_static.py` + a catch-all route in `app/main.py`) so the backend and frontend deploy as one Cloud Run service, matching the locked stack ("served as static build by FastAPI"). Path-traversal-safe by construction (resolved path must stay under `webapp/dist`) — tested. Only activates when `webapp/dist` exists, so Python-only local dev is unaffected.
+- `Dockerfile` is now multi-stage: Node stage builds the webapp, Python stage copies `dist/` in. `make webapp` now runs the real dev server; CI builds + lints the webapp (Node 24) before the Python steps, so `webapp/dist` exists for both the new SPA-serving test and the Docker build.
+- 5 new Python tests (64 passing total) — pure-function tests for the path resolver plus one integration test (skipped if `dist/` isn't built) confirming `/login` returns the SPA shell. Webapp: `npm run build` (tsc + vite build) and `npm run lint` (oxlint) both clean. Locally verified end-to-end: built the webapp, booted the full FastAPI app, confirmed `/healthz`, `/login` (SPA shell), a built JS/CSS asset, and unauthenticated `/api/cases` (401) all resolve correctly from the same origin.
+
+**Blocked (same root cause):**
+- No live Firebase project — sign-in itself is unverified; `webapp/.env.example` documents the config shape (`VITE_FIREBASE_*`) to fill in once one exists.
+
+**Next:**
+- Corpus pipeline tooling (`scripts/corpus_ingest.py`, `corpus_src/` schema) + golden-notice eval harness — both still gated on Aman's curation work (real corpus content, real anonymized notices), not something to fabricate.
+- `POST /tasks/reminders` HTTP endpoint + OIDC wiring, once GCP is unblocked.
+- CaseDetail/DraftEditor/Clients/CorpusAdmin/Evidence/Settings/Billing pages — deferred until their backing endpoints exist (Phase 2+).

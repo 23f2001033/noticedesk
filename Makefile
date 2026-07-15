@@ -11,7 +11,7 @@ lint:
 	ruff format --check .
 
 webapp:
-	@echo "webapp/ not scaffolded yet -- arrives in Phase 1 (see docs/SPEC.md #11)."
+	cd webapp && npm run dev
 
 corpus:
 	@echo "corpus ingestion pipeline not implemented yet -- arrives in Phase 1 (see docs/SPEC.md #8)."
