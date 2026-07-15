@@ -44,6 +44,9 @@ jobs:
       - name: Test
         run: make test
 
+      - name: Eval gate
+        run: make eval
+
       - name: Docker build (Cloud Run readiness check, no push)
         run: docker build -t noticedesk:ci .
 

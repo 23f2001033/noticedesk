@@ -17,7 +17,7 @@ corpus:
 	python scripts/corpus_ingest.py
 
 eval:
-	@echo "golden-notice eval + citation verifier not implemented yet -- arrives in Phase 2 (see docs/SPEC.md #14)."
+	python scripts/eval_notices.py
 
 deploy:
 	@if [ -z "$$GCP_PROJECT_ID" ]; then \

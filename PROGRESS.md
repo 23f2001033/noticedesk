@@ -112,3 +112,15 @@
 **Blocked (same root cause):** `embed_text()` unverified against a live key; actual corpus content is entirely pending Aman's curation.
 
 **Next:** golden-notice eval harness (`scripts/eval_notices.py`, `make eval`) — same pattern: build the scoring/gate logic now, real anonymized notices come from Aman's CA network later.
+
+## 2026-07-16 — Phase 1, slice 6: golden-notice eval harness — Phase 1 buildable scope complete
+
+**Shipped:**
+- `app/services/eval_notices.py`: runs the classifier + extractor pipeline against `evals/golden_notices/*.json`, scores field accuracy on the fields each golden case actually specifies, and separately checks due-date handling — either the extracted `due_date` matches, or (when the golden case says the notice states none) the extractor correctly flagged it `absent` rather than guessing. Gate (`EvalSummary.passes_gates()`): ≥90% field accuracy, 100% due-date-or-flag, matching §14 exactly. An empty golden set passes trivially — nothing to fail yet.
+- `scripts/eval_notices.py` (`make eval`) — prints the score, fails loudly (exit 1) if either gate misses. Verified the zero-notices path really does short-circuit before touching Gemini at all (confirmed by reading the call path, not just trusting the docstring), so it's safe to run with no `GEMINI_API_KEY` — **added as a real CI step now** (`.github/workflows/ci.yml`), not deferred, since it costs nothing today and will start enforcing automatically the moment real golden notices land.
+- `evals/golden_notices/README.md` documents the JSON schema — **deliberately no actual notices added**, same reasoning as the corpus content: real anonymized notices are Aman's CA-network collection work (§16), and there's no honest synthetic substitute for a gate whose entire purpose is catching real-world extraction failures.
+- 14 new tests (87 passing total) — parsing/validation, per-field scoring, all four due-date branches (matches / mismatch / correctly-flagged-absent / silently-guessed-when-it-shouldn't-have), and gate threshold math, all against obviously-fictional fixtures.
+
+**This closes out everything in Phase 1 that's buildable without your direct input.** What's left in Phase 1 (§15 accept criteria: "10 golden notices → correct cards ≤30s p50; deadlines on board; reminder fires on test case; eval gate live") needs, in order: (1) your GCP Console fix + a provisioned project/Firebase/Gemini key, (2) real corpus content, (3) real golden notices. The eval gate itself is live in CI already — it just has nothing to grade yet.
+
+**Also still open from earlier slices, unchanged:** DRC-01A/DRC-01 statutory deadline day-counts need sign-off; `POST /tasks/reminders` HTTP endpoint deferred; email-link sign-in deferred; corpus versioning-on-edit not implemented; `LICENSE` content undecided.
