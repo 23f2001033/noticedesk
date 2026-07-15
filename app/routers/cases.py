@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 
 from app.deps import get_current_firm, get_current_user
+from app.models.case import CaseStatus
+from app.services.board import list_cases_for_firm
 from app.services.case_pipeline import ingest_notice
 
 router = APIRouter(prefix="/api/cases", tags=["cases"])
@@ -23,3 +25,12 @@ async def create_case(
         content_type=file.content_type or "application/pdf",
     )
     return case.model_dump(mode="json")
+
+
+@router.get("")
+def get_cases(
+    status: CaseStatus | None = None,
+    firm: dict = Depends(get_current_firm),
+) -> list[dict]:
+    """docs/SPEC.md #11 board / #12 GET /api/cases?filters -- firm-scoped, urgency-annotated."""
+    return list_cases_for_firm(firm_id=firm["firm_id"], status=status)

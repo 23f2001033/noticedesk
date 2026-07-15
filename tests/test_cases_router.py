@@ -41,3 +41,27 @@ def test_create_case_returns_case_on_success(monkeypatch, client, fake_firestore
     body = response.json()
     assert body["firm_id"] == "firm-1"
     assert body["notice_type"] == "ASMT-10"
+
+
+def test_get_cases_requires_auth(client) -> None:
+    response = client.get("/api/cases")
+
+    assert response.status_code == 401
+
+
+def test_get_cases_returns_firm_scoped_list(monkeypatch, client, fake_firestore_with_user) -> None:
+    monkeypatch.setattr("app.deps.verify_firebase_token", lambda token: {"uid": "uid-1"})
+    monkeypatch.setattr(
+        "app.deps.get_firestore_client",
+        lambda: fake_firestore_with_user({"firm_id": "firm-1", "role": "partner"}),
+    )
+    monkeypatch.setattr(
+        "app.routers.cases.list_cases_for_firm",
+        lambda **kwargs: [{"id": "case-1", "firm_id": kwargs["firm_id"], "urgency": "on_track"}],
+    )
+
+    response = client.get("/api/cases", headers={"Authorization": "Bearer good-token"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body == [{"id": "case-1", "firm_id": "firm-1", "urgency": "on_track"}]

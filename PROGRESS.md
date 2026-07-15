@@ -61,3 +61,21 @@
 - Deadline board write + reminder scheduling wiring (Case → reminder queue).
 - `webapp/` scaffold with Login + Board pages.
 - Corpus pipeline tooling + WhatsApp reminders + golden-notice eval harness (all still blocked on external inputs — see prior entry).
+
+## 2026-07-16 — Phase 1, slice 3: deadline board + reminder agent
+
+**Shipped:**
+- `GET /api/cases?status=` (§12) via `app/services/board.py`: firm-scoped case list, each annotated with an urgency badge (`overdue` / `due_soon_3d` / `due_soon_7d` / `on_track` / `no_deadline`, §11).
+- WhatsApp client wrapper (`app/services/wa_client.py`, `send_whatsapp_message`). **Not yet smoke-tested against live WhatsApp Business credentials** — no `WA_ACCESS_TOKEN` provisioned.
+- Reminder agent (`app/agents/reminder.py`, §9): decision logic (`decide_reminders_for_cases`) is a pure function over `(case_id, Case)` pairs — fires on T-7/T-3/T-1, skips (with a logged reason) once a case is past needing one (`reply_filed`/`dropped`/`order_passed`/`appeal_window`/`closed`). `run_reminder_check` wires it to Firestore + WhatsApp send + `agent_runs` logging; falls back (status=`fallback`, still logged) if a firm has no `wa_number` on file rather than silently dropping the reminder.
+- 17 new tests (59 passing total). Reminder decision logic is fully unit-tested without mocks (pure function); Firestore/WhatsApp sends are mocked for `run_reminder_check`.
+
+**Deliberately deferred:**
+- `POST /tasks/reminders` HTTP endpoint + OIDC verification (Cloud Scheduler → task endpoint per §12) — needs a live GCP project to configure the OIDC audience, so `run_reminder_check()` is callable directly (and tested) but not yet wired to an HTTP route. Wiring it is a small step once GCP is unblocked.
+
+**Blocked (same root cause):**
+- `wa_client.py` unverified against anything live; same for the Firestore-touching pieces reused here.
+
+**Next:**
+- `webapp/` scaffold (Vite + React + Tailwind) with Login + Board pages — first slice that gives you something to click through.
+- Corpus pipeline tooling + golden-notice eval harness (still gated on Aman's curation work, not something to fabricate).

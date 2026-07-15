@@ -15,12 +15,12 @@ dependencies = [
     "google-cloud-documentai",
     "pypdf",
     "python-multipart",
+    "httpx",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "httpx",
     "ruff",
 ]
 
