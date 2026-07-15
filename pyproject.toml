@@ -11,6 +11,10 @@ dependencies = [
     "firebase-admin",
     "google-genai",
     "tzdata",
+    "google-cloud-storage",
+    "google-cloud-documentai",
+    "pypdf",
+    "python-multipart",
 ]
 
 [project.optional-dependencies]
@@ -37,7 +41,14 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.flake8-bugbear]
 # FastAPI's Depends()/Query()/Path()/Body() in argument defaults is the idiomatic
 # pattern, not the mutable-default-argument bug B008 otherwise flags.
-extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Body"]
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "fastapi.Query",
+    "fastapi.Path",
+    "fastapi.Body",
+    "fastapi.File",
+    "fastapi.Form",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

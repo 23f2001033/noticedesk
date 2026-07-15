@@ -22,6 +22,9 @@ class Settings(BaseSettings):
 
     cloud_storage_bucket: str | None = None
 
+    document_ai_processor_id: str | None = None
+    document_ai_location: str = "us"
+
     wa_phone_number_id: str | None = None
     wa_access_token: str | None = None
     wa_verify_token: str | None = None

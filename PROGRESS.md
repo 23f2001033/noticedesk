@@ -43,3 +43,21 @@
 - Corpus pipeline tooling (`scripts/corpus_ingest.py`, `corpus_src/` schema) — actual corpus content is Aman's curation task, not something to fabricate.
 - WhatsApp reminders — needs WhatsApp Business Cloud API credentials.
 - Golden-notice eval harness — needs real anonymized notices from Aman's CA network.
+
+## 2026-07-16 — Phase 1, slice 2: intake pipeline (upload → OCR → classify → extract → persist)
+
+**Shipped:**
+- Cloud Storage upload (`app/services/storage.py`) — lazy client, `gs://` ref, raises clearly if `CLOUD_STORAGE_BUCKET` isn't configured.
+- Document AI OCR wrapper (`app/services/document_ai.py`). **Not yet smoke-tested against a live processor** — same caveat as `gemini.py`, needs a real run once a processor is provisioned.
+- OCR routing (`app/services/ocr.py`, §5 step 2): native PDF text via `pypdf` first, falls back to Document AI when text density is low (<200 chars/page) or the input is an image. New dependency `pypdf` — confirmed with Aman before adding, per the "ask before new dependencies" rule.
+- Case ingestion pipeline (`app/services/case_pipeline.py`): wires upload → OCR → classifier → extractor → due-date resolution (extracted vs statutory-default, always `due_date_confirmed=False`) → writes `cases/{id}`, `cases/{id}/documents/{doc}`, `cases/{id}/extraction/current`.
+- `POST /api/cases` router (`app/routers/cases.py`, §12), firm-scoped via existing auth deps.
+- Tests for all of the above (42 passing total) — Firestore/Storage/Document AI/Gemini all mocked; app boot + `/healthz` + an unauthenticated `POST /api/cases` (401) smoke-tested against a live local uvicorn process.
+
+**Blocked (same root cause — no GCP project, Aman fixing Google Cloud Console access):**
+- `storage.py`, `document_ai.py`, `firestore.py`, `gemini.py` all unverified against anything live.
+
+**Next:**
+- Deadline board write + reminder scheduling wiring (Case → reminder queue).
+- `webapp/` scaffold with Login + Board pages.
+- Corpus pipeline tooling + WhatsApp reminders + golden-notice eval harness (all still blocked on external inputs — see prior entry).
