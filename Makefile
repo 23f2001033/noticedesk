@@ -14,7 +14,7 @@ webapp:
 	cd webapp && npm run dev
 
 corpus:
-	@echo "corpus ingestion pipeline not implemented yet -- arrives in Phase 1 (see docs/SPEC.md #8)."
+	python scripts/corpus_ingest.py
 
 eval:
 	@echo "golden-notice eval + citation verifier not implemented yet -- arrives in Phase 2 (see docs/SPEC.md #14)."

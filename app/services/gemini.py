@@ -65,3 +65,15 @@ def generate_json(
         "tokens_out": getattr(usage, "candidates_token_count", None),
         "latency_ms": latency_ms,
     }
+
+
+def embed_text(*, model: str, text: str) -> list[float]:
+    """Generates an embedding vector for text via the Gemini embedding model
+    (docs/SPEC.md #7, #8 -- corpus_chunks retrieval).
+
+    NOTE: same caveat as generate_json -- not yet smoke-tested against a live
+    API key.
+    """
+    client = _get_client()
+    response = client.models.embed_content(model=model, contents=text)
+    return response.embeddings[0].values

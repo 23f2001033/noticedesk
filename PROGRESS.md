@@ -97,3 +97,18 @@
 - Corpus pipeline tooling (`scripts/corpus_ingest.py`, `corpus_src/` schema) + golden-notice eval harness — both still gated on Aman's curation work (real corpus content, real anonymized notices), not something to fabricate.
 - `POST /tasks/reminders` HTTP endpoint + OIDC wiring, once GCP is unblocked.
 - CaseDetail/DraftEditor/Clients/CorpusAdmin/Evidence/Settings/Billing pages — deferred until their backing endpoints exist (Phase 2+).
+
+## 2026-07-16 — Phase 1, slice 5: corpus ingestion pipeline
+
+**Shipped:**
+- `app/services/corpus.py`: parses `corpus_src/*.yaml` against the `CorpusItem` schema, chunks `verbatim_text` (fixed-size sliding window, simple by design — nothing real to tune it against yet), embeds via a new `embed_text()` in `gemini.py` (same "unverified against a live key" caveat as `generate_json`), and upserts to Firestore. Items without `reviewed_by` are written to `corpus` for admin visibility but **never** to `corpus_chunks` — structurally unretrievable by the drafter's vector search until reviewed, per the spec's "every item requires reviewed_by before it becomes retrievable" rule.
+- `scripts/corpus_ingest.py` (`make corpus`) — thin CLI wrapper, fails clearly if `GEMINI_MODEL_EMBED` isn't set rather than crashing; smoke-tested against an empty `corpus_src/` (correctly prints the config error and exits 1).
+- `corpus_src/README.md` documents the YAML schema with an inline example — **deliberately no actual `.yaml` files added**. Populating this with the real ~25–40 circulars, CGST sections/rules, and ~60–120 case-law holdings is Aman's (or a CA advisor's) curation work; inventing statutory text from a model's memory here would be exactly the kind of unverified-authority problem the citation-lock rule exists to prevent, just one step upstream of a draft.
+- New dependency `pyyaml` — the spec mandates the `corpus_src/*.yaml` format itself, and pyyaml is the standard library for it (no real alternative to weigh, unlike the pypdf decision), so added directly rather than raised as a question; flagging here for visibility.
+- 9 new tests (73 passing total) — parsing/validation, chunking (including overlap behavior), and the reviewed-vs-unreviewed upsert branching, all against obviously-fictional fixture text, never real legal content.
+
+**Known simplification (documented in `corpus_src/README.md`):** the spec's "immutable once reviewed; edits create a new version" versioning isn't implemented — every ingest currently overwrites `version: 1`. Not worth building out until real curation and real edits start happening.
+
+**Blocked (same root cause):** `embed_text()` unverified against a live key; actual corpus content is entirely pending Aman's curation.
+
+**Next:** golden-notice eval harness (`scripts/eval_notices.py`, `make eval`) — same pattern: build the scoring/gate logic now, real anonymized notices come from Aman's CA network later.

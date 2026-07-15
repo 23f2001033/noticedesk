@@ -16,6 +16,7 @@ dependencies = [
     "pypdf",
     "python-multipart",
     "httpx",
+    "pyyaml",
 ]
 
 [project.optional-dependencies]
